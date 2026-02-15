@@ -20,7 +20,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-7_5xrto5c0+-7c0(75$^2f##b=r+-c$-4)t_4dm*_x@2quu5v9'
+SECRET_KEY = 'django-insecure-f8l^ex8yqc6_=@v4#ht1&_i566r=vjl31o8yws&lv)l)91)r1+'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -77,7 +77,7 @@ WSGI_APPLICATION = 'backend.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'sprint2db',
+        'NAME': 'geektext',
         'USER': 'root',
         'PASSWORD': 'Da110903@coco2020',
         'HOST': 'localhost',
