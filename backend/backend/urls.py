@@ -5,6 +5,9 @@ from api import views
 urlpatterns = [
     path('admin/', admin.site.urls),
 
-    # Your Profile POST endpoint
-    path('api/profile/', views.create_profile),
+    # Create User
+    path('api/users/', views.create_user),
+
+    # Retrieve User by Username
+    path('api/users/<str:username>/', views.get_user),
 ]
