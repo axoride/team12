@@ -1,5 +1,6 @@
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
+
 from .models import Book
 from .serializers import BookSerializer
 
@@ -14,5 +15,12 @@ def books_by_genre(request):
         )
 
     books = Book.objects.filter(genre__iexact=genre)
+    serializer = BookSerializer(books, many=True)
+    return Response(serializer.data)
+
+@api_view(['GET'])
+def top_sellers(request):
+    books = Book.objects.order_by('-copies_sold')[:10]
+
     serializer = BookSerializer(books, many=True)
     return Response(serializer.data)
