@@ -1,38 +1,25 @@
-from rest_framework.decorators import api_view
+from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from .models import UserProfile
-from .serializers import UserProfileSerializer
+from .models import Book
+from .serializers import BookSerializer
 
 
-# -----------------------------
-# Create User (POST)
-# Endpoint: /api/users/
-# -----------------------------
-@api_view(['POST'])
-def create_user(request):
-    serializer = UserProfileSerializer(data=request.data)
-
-    if serializer.is_valid():
-        serializer.save()
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
-
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+class CreateBookView(APIView):
+    def post(self, request):
+        serializer = BookSerializer(data=request.data)  # creates an instance of BookSerializer into JSON
+        if serializer.is_valid():  # if valid save
+            serializer.save()
+            return Response(status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)  # else return error
 
 
-# ------------------------------------
-# Retrieve User by Username (GET)
-# Endpoint: /api/users/<username>/
-# ------------------------------------
-@api_view(['GET'])
-def get_user(request, username):
-    try:
-        user = UserProfile.objects.get(username=username)
-    except UserProfile.DoesNotExist:
-        return Response(
-            {"error": "User not found"},
-            status=status.HTTP_404_NOT_FOUND
-        )
+class RetrieveBookByISBNView(APIView):
+    def get(self, request, isbn):
+        try:
+            book = Book.objects.get(isbn=isbn)  # find the book
+            serializer = BookSerializer(book)  # convert to JSON
+            return Response(serializer.data)  # return it
+        except Book.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
 
-    serializer = UserProfileSerializer(user)
-    return Response(serializer.data, status=status.HTTP_200_OK)
