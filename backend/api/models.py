@@ -51,7 +51,7 @@ class BookDetail(models.Model):
 
 
 # ====================
-# Wishlist Management
+# Wishlist Management (Updated: 3-10-2026)
 # ====================
 
 class Wishlist(models.Model):
