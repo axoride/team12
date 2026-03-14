@@ -27,12 +27,12 @@ A RESTful API service built with **Django REST Framework** and **MySQL** to powe
 
 | Feature | Owner |
 |---------|-------|
-| Book Browsing & Sorting | TBD |
-| Profile Management | TBD |
-| Shopping Cart | TBD |
+| Book Browsing & Sorting | Elizabeth |
+| Profile Management | Daniel |
+| Shopping Cart | Lisandro |
 | Book Details | Josue |
-| Book Rating & Commenting | TBD |
-| Wish List Management | TBD |
+| Book Rating & Commenting | Nurdos |
+| Wish List Management | Edmond |
 
 ---
 
