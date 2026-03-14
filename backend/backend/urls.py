@@ -34,6 +34,6 @@ urlpatterns = [
     # -------------------
     # Book Details        ← Dynamic route LAST among /api/books/ paths
     # -------------------
-    path('api/books/create/', views.CreateBookView.as_view()),
-    path('api/books/<str:isbn>/', views.RetrieveBookByISBNView.as_view()),
+    path('api/books/create/', views.create_book),
+    path('api/books/<str:isbn>/', views.retrieve_book_by_isbn),
 ]

@@ -84,23 +84,23 @@ def get_cart_subtotal(request):
 # -----------------------------
 # Book Details
 # -----------------------------
-class CreateBookView(APIView):
-    def post(self, request):
-        serializer = BookDetailSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+@api_view(['POST'])
+def create_book(request):
+    serializer = BookDetailSerializer(data=request.data)
+    if serializer.is_valid():
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class RetrieveBookByISBNView(APIView):
-    def get(self, request, isbn):
-        try:
-            book = BookDetail.objects.get(isbn=isbn)
-            serializer = BookDetailSerializer(book)
-            return Response(serializer.data)
-        except BookDetail.DoesNotExist:
-            return Response(status=status.HTTP_404_NOT_FOUND)
+@api_view(['GET'])
+def retrieve_book_by_isbn(request, isbn):
+    try:
+        book = BookDetail.objects.get(isbn=isbn)
+        serializer = BookDetailSerializer(book)
+        return Response(serializer.data)
+    except BookDetail.DoesNotExist:
+        return Response({'error': 'Book not found'}, status=status.HTTP_404_NOT_FOUND)
 
 
 # -----------------------------
