@@ -40,4 +40,4 @@ A RESTful API service built with **Django REST Framework** and **MySQL** to powe
 
 - **Course:** CEN 4010
 - **Methodology:** Scrum (5 × 2-week sprints)
-- **Repo:** [GitHub](https://github.com/axoride/team12)s project.
+- **Repo:** [GitHub](https://github.com/axoride/team12) project.
