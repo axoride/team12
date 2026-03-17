@@ -156,6 +156,8 @@ def add_book_to_wishlist(request):
 # -----------------------------
 # Retrieve List of Books by Genre
 
+from django.db.models import Avg
+
 @api_view(['GET'])
 def books_by_genre(request):
     genre = request.GET.get('genre')
@@ -163,24 +165,23 @@ def books_by_genre(request):
     if not genre:
         return Response(
             {"error": "Genre parameter is required."},
-            status=400
+            status=status.HTTP_400_BAD_REQUEST
         )
 
-    books = Book.objects.filter(genre__iexact=genre)
-    serializer = BookSerializer(books, many=True)
+    books = BookDetail.objects.filter(genre__iexact=genre)
+    serializer = BookBrowseSerializer(books, many=True)
     return Response(serializer.data)
 
-# Retrieve List of Top Sellers (Top 10 books that have sold the most copied)
+
 @api_view(['GET'])
 def top_sellers(request):
-    books = Book.objects.order_by('-copies_sold')[:10]
-    serializer = BookSerializer(books, many=True)
+    books = BookDetail.objects.order_by('-copies_sold')[:10]
+    serializer = BookBrowseSerializer(books, many=True)
     return Response(serializer.data)
 
-# Retrieve List of Books for a particular rating and higher
+
 @api_view(['GET'])
 def books_by_rating(request):
-
     rating = request.GET.get('rating')
 
     if rating is None:
@@ -197,20 +198,16 @@ def books_by_rating(request):
             status=status.HTTP_400_BAD_REQUEST
         )
 
-    if rating < 0 or rating > 5:
-        return Response(
-            {"error": "Rating must be between 0 and 5."},
-            status=status.HTTP_400_BAD_REQUEST
-        )
+    books = BookDetail.objects.annotate(
+        avg_rating=Avg('ratings__rating')
+    ).filter(avg_rating__gte=rating)
 
-    books = Book.objects.filter(rating__gte=rating)
-    serializer = BookSerializer(books, many=True)
+    serializer = BookBrowseSerializer(books, many=True)
     return Response(serializer.data)
 
-# Discount books by publisher
+
 @api_view(['PATCH'])
 def discount_books_by_publisher(request):
-
     publisher = request.data.get('publisher')
     discount_percent = request.data.get('discount_percent')
 
@@ -221,14 +218,14 @@ def discount_books_by_publisher(request):
         )
 
     try:
-        discount_percent = float(discount_percent)
-    except ValueError:
+        discount_percent = Decimal(discount_percent)
+    except:
         return Response(
-            {"error": "Discount percent must be a number."},
+            {"error": "Discount must be a number."},
             status=status.HTTP_400_BAD_REQUEST
         )
 
-    books = Book.objects.filter(publisher=publisher)
+    books = BookDetail.objects.filter(publisher=publisher)
 
     if not books.exists():
         return Response(
@@ -236,15 +233,16 @@ def discount_books_by_publisher(request):
             status=status.HTTP_404_NOT_FOUND
         )
 
+    discount = discount_percent / Decimal(100)
+
     for book in books:
-        book.price = book.price * (1 - discount_percent / 100)
+        book.price = book.price * (Decimal(1) - discount)
         book.save()
 
     return Response(
         {"message": "Discount applied successfully."},
         status=status.HTTP_200_OK
     )
-
 # -----------------------------
 # Book Rating & Commenting
 # -----------------------------
