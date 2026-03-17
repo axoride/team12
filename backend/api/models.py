@@ -1,7 +1,7 @@
 from django.db import models
 
 # ====================
-# Profile Management  (Updated: 3-10-2026)
+# Profile Management  (Updated: 3-17-2026)
 # ====================
 
 class UserProfile(models.Model):
