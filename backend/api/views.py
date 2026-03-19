@@ -84,23 +84,23 @@ def get_cart_subtotal(request):
 # -----------------------------
 # Book Details
 # -----------------------------
-class CreateBookView(APIView):
-    def post(self, request):
-        serializer = BookDetailSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+@api_view(['POST'])
+def create_book(request):
+    serializer = BookDetailSerializer(data=request.data)
+    if serializer.is_valid():
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class RetrieveBookByISBNView(APIView):
-    def get(self, request, isbn):
-        try:
-            book = BookDetail.objects.get(isbn=isbn)
-            serializer = BookDetailSerializer(book)
-            return Response(serializer.data)
-        except BookDetail.DoesNotExist:
-            return Response(status=status.HTTP_404_NOT_FOUND)
+@api_view(['GET'])
+def retrieve_book_by_isbn(request, isbn):
+    try:
+        book = BookDetail.objects.get(isbn=isbn)
+        serializer = BookDetailSerializer(book)
+        return Response(serializer.data)
+    except BookDetail.DoesNotExist:
+        return Response({'error': 'Book not found'}, status=status.HTTP_404_NOT_FOUND)
 
 
 # -----------------------------
@@ -172,3 +172,63 @@ def top_sellers(request):
     books = BookDetail.objects.order_by('-copies_sold')[:10]
     serializer = BookBrowseSerializer(books, many=True)
     return Response(serializer.data, status=status.HTTP_200_OK)
+
+# -----------------------------
+# Book Rating & Commenting
+# -----------------------------
+from django.db.models import Avg
+from .models import BookRating, BookComment
+from .serializers import BookRatingSerializer, BookCommentSerializer, BookReviewSummarySerializer
+
+
+@api_view(['GET'])
+def get_book_reviews(request, isbn):
+    try:
+        book = BookDetail.objects.get(isbn=isbn)
+    except BookDetail.DoesNotExist:
+        return Response({"error": "Book not found."}, status=status.HTTP_404_NOT_FOUND)
+
+    ratings = BookRating.objects.filter(book=book)
+    comments = BookComment.objects.filter(book=book)
+    avg = ratings.aggregate(avg=Avg('rating'))['avg']
+
+    data = {
+        'book_isbn': isbn,
+        'average_rating': round(avg, 2) if avg is not None else None,
+        'ratings': ratings,
+        'comments': comments,
+    }
+    serializer = BookReviewSummarySerializer(data)
+    return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+@api_view(['POST'])
+def submit_rating(request, isbn):
+    try:
+        BookDetail.objects.get(isbn=isbn)
+    except BookDetail.DoesNotExist:
+        return Response({"error": "Book not found."}, status=status.HTTP_404_NOT_FOUND)
+
+    data = request.data.copy()
+    data['book_isbn'] = isbn
+    serializer = BookRatingSerializer(data=data)
+    if serializer.is_valid():
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['POST'])
+def submit_comment(request, isbn):
+    try:
+        BookDetail.objects.get(isbn=isbn)
+    except BookDetail.DoesNotExist:
+        return Response({"error": "Book not found."}, status=status.HTTP_404_NOT_FOUND)
+
+    data = request.data.copy()
+    data['book_isbn'] = isbn
+    serializer = BookCommentSerializer(data=data)
+    if serializer.is_valid():
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
