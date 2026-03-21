@@ -26,14 +26,21 @@ urlpatterns = [
     path('api/wishlist/', views.add_book_to_wishlist),
 
     # -------------------
-    # Book Browsing & Sorting  ← MOVED ABOVE the dynamic <isbn> route
+    # Book Browsing & Sorting
     # -------------------
     path('api/books/genre/', views.books_by_genre, name='books_by_genre'),
     path('api/books/top-sellers/', views.top_sellers, name='top_sellers'),
 
     # -------------------
-    # Book Details        ← Dynamic route LAST among /api/books/ paths
+    # Book Details
     # -------------------
-    path('api/books/create/', views.CreateBookView.as_view()),
-    path('api/books/<str:isbn>/', views.RetrieveBookByISBNView.as_view()),
+    path('api/books/create/', views.create_book),
+    path('api/books/<str:isbn>/', views.retrieve_book_by_isbn),
+
+    # -------------------
+    # Book Rating & Commenting
+    # -------------------
+    path('api/books/<str:isbn>/reviews/', views.get_book_reviews),
+    path('api/books/<str:isbn>/ratings/', views.submit_rating),
+    path('api/books/<str:isbn>/comments/', views.submit_comment),
 ]
