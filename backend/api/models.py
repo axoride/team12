@@ -18,7 +18,7 @@ class UserProfile(models.Model):
 
 
 # ====================
-# Shopping Cart
+# Shopping Cart (LL Feature)
 # ====================
 
 class CartItem(models.Model):
