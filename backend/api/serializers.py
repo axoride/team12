@@ -16,7 +16,7 @@ class UpdateUserSerializer(serializers.ModelSerializer):
     """
     class Meta:
         model = UserProfile
-        fields = ['password', 'name', 'address', 'city', 'state', 'zip']
+        fields = ['username', 'password', 'name', 'address', 'city', 'state', 'zip']
         # email is intentionally excluded here
 
 class CreditCardSerializer(serializers.ModelSerializer):
