@@ -18,7 +18,7 @@ class UserProfile(models.Model):
 
 
 # ====================
-# Shopping Cart
+# Shopping Cart (LL Feature)
 # ====================
 
 class CartItem(models.Model):
@@ -51,7 +51,7 @@ class BookDetail(models.Model):
 
 
 # ====================
-# Wishlist Management (Updated: 3-10-2026)
+# Wishlist Management (Updated: 3-10-2026) potato
 # ====================
 
 class Wishlist(models.Model):
