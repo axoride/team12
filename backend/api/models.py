@@ -7,6 +7,7 @@ from django.db import models
 class UserProfile(models.Model):
     username = models.CharField(max_length=50, unique=True)
     password = models.CharField(max_length=255)
+    name = models.CharField(max_length=100, blank=True, null=True)
     email = models.CharField(max_length=100, unique=True)
     address = models.CharField(max_length=255, blank=True, null=True)
     city = models.CharField(max_length=100, blank=True, null=True)
@@ -15,6 +16,15 @@ class UserProfile(models.Model):
 
     def __str__(self):
         return self.username
+
+class CreditCard(models.Model):
+    user = models.ForeignKey(UserProfile, on_delete=models.CASCADE, related_name='credit_cards')
+    card_number = models.CharField(max_length=16)
+    expiration_date = models.CharField(max_length=5)   # format: MM/YY
+    cvv = models.CharField(max_length=4)
+
+    def __str__(self):
+        return f"Card ending in {self.card_number[-4:]} for {self.user.username}"
 
 
 # ====================
