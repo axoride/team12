@@ -94,7 +94,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'geektext',
         'USER': 'root',
-        'PASSWORD': "tricanLiz1", # change this to your database password
+        'PASSWORD': "YOURPASSWORDHERE", # change this to your database password
         'HOST': 'localhost',
         'PORT': '3306',
     }
