@@ -33,8 +33,10 @@ urlpatterns = [
     # -------------------
     # Book Details
     # -------------------
-    path('books/create/', views.create_book),
+    path('books/', views.create_book),
     path('books/<str:isbn>/', views.retrieve_book_by_isbn),
+    path('authors/', views.create_author),
+    path('authors/<int:author_id>/', views.retrieve_author_by_id),
 
     # -------------------
     # Book Rating & Commenting

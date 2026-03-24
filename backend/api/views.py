@@ -8,6 +8,7 @@ from .models import (
     UserProfile,
     CartItem,
     BookDetail,
+    Author,
     Wishlist,
     WishlistBook, 
     CreditCard
@@ -20,8 +21,10 @@ from .serializers import (
     AddBookToWishlistSerializer,
     WishlistBookSerializer,
     BookBrowseSerializer,
+    BookBrowseSerializer,
     UpdateUserSerializer,
-    CreditCardSerializer
+    CreditCardSerializer,
+    AuthorSerializer,
 )
 
 # -----------------------------
@@ -142,7 +145,22 @@ def retrieve_book_by_isbn(request, isbn):
     except BookDetail.DoesNotExist:
         return Response({'error': 'Book not found'}, status=status.HTTP_404_NOT_FOUND)
 
+@api_view(['POST'])
+def create_author(request):
+    serializer = AuthorSerializer(data=request.data)
+    if serializer.is_valid():
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+@api_view(['GET'])
+def retrieve_author_by_id(request, author_id):
+    try:
+        author = Author.objects.get(id=author_id)
+        serializer = AuthorSerializer(author)
+        return Response(serializer.data)
+    except Author.DoesNotExist:
+        return Response(status=status.HTTP_404_NOT_FOUND)
 # -----------------------------
 # Wishlist Management (Last Updated: 3-23-2026)
 # -----------------------------
