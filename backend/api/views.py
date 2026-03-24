@@ -49,9 +49,28 @@ def get_user(request, username):
 # -----------------------------
 @api_view(['GET'])
 def get_cart_items(request):
-    items = CartItem.objects.all()
+    user_id = request.GET.get('user_id')
+    if not user_id:
+        return Response({'error': 'user_id is required'}, status=status.HTTP_400_BAD_REQUEST)
+
+    items = CartItem.objects.filter(user_id=user_id)
     serializer = CartItemSerializer(items, many=True)
-    return Response(serializer.data)
+    return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+@api_view(['DELETE'])
+def remove_from_cart(request):
+    user_id = request.data.get('user_id')
+    book_id = request.data.get('book_id')
+
+    if not user_id or not book_id:
+        return Response({'error': 'user_id and book_id are required'}, status=status.HTTP_400_BAD_REQUEST)
+
+    deleted, _ = CartItem.objects.filter(user_id=user_id, book_id=book_id).delete()
+    if deleted == 0:
+        return Response({'error': 'Item not found in cart'}, status=status.HTTP_404_NOT_FOUND)
+
+    return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 @api_view(['POST'])
