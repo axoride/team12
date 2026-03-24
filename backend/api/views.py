@@ -167,7 +167,7 @@ def retrieve_author_by_id(request, author_id):
 
 
 # -----------------------------
-# Wishlist Management
+# Wishlist Management (Last Updated: 3-23-2026)
 # -----------------------------
 @api_view(['POST'])
 def create_wishlist(request):
@@ -186,7 +186,6 @@ def create_wishlist(request):
 
     Wishlist.objects.create(user=user, name=name)
     return Response(status=status.HTTP_201_CREATED)
-
 
 @api_view(['POST'])
 def add_book_to_wishlist(request):
@@ -213,6 +212,65 @@ def add_book_to_wishlist(request):
     WishlistBook.objects.create(book=book, wishlist=wishlist)
     return Response({"message": "Book added to wishlist successfully."}, status=status.HTTP_200_OK)
 
+@api_view(['DELETE'])
+def move_book_from_wishlist_to_cart(request):
+    book_id = request.data.get('book_id')
+    wishlist_id = request.data.get('wishlist_id')
+
+    if not book_id or not wishlist_id:
+        return Response(
+            {"error": "book_id and wishlist_id are required."},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    try:
+        wishlist = Wishlist.objects.get(id=wishlist_id)
+    except Wishlist.DoesNotExist:
+        return Response(
+            {"error": "Wishlist not found."},
+            status=status.HTTP_404_NOT_FOUND
+        )
+
+    try:
+        book = BookDetail.objects.get(id=book_id)
+    except BookDetail.DoesNotExist:
+        return Response(
+            {"error": "Book not found."},
+            status=status.HTTP_404_NOT_FOUND
+        )
+
+    try:
+        wishlist_book = WishlistBook.objects.get(wishlist=wishlist, book=book)
+    except WishlistBook.DoesNotExist:
+        return Response(
+            {"error": "This book is not in the specified wishlist."},
+            status=status.HTTP_404_NOT_FOUND
+        )
+
+    # Remove from wishlist
+    wishlist_book.delete()
+
+    # Add to cart using the wishlist owner's user id
+    existing_cart_item = CartItem.objects.filter(
+        user_id=wishlist.user.id,
+        book_id=book.id
+    ).first()
+
+    if existing_cart_item:
+        existing_cart_item.quantity += 1
+        existing_cart_item.save()
+    else:
+        CartItem.objects.create(
+            user_id=wishlist.user.id,
+            book_id=book.id,
+            price=book.price,
+            quantity=1
+        )
+
+    return Response(
+        {"message": "Book removed from wishlist and added to cart successfully."},
+        status=status.HTTP_200_OK
+    )
 
 # -----------------------------
 # Book Browsing & Sorting
