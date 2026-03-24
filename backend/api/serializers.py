@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import UserProfile, CartItem, BookDetail, Wishlist, WishlistBook, CreditCard
+from .models import UserProfile, CartItem, BookDetail, Wishlist, WishlistBook, CreditCard, Author
 
 # -------------------
 # Profile Management
@@ -100,6 +100,10 @@ class BookDetailSerializer(serializers.ModelSerializer):
         model = BookDetail  # model getting serialized
         fields = ['isbn', 'name', 'description', 'price', 'author', 'genre', 'publisher', 'year_published', 'copies_sold']
 
+class AuthorSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Author
+        fields = '__all__'
 # -------------------
 # Book Browsing & Sorting
 # -------------------
