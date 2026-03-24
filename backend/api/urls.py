@@ -3,6 +3,14 @@ from . import views
 
 urlpatterns = [
     # -------------------
+    # Book Browsing & Sorting
+    # -------------------
+    path('books/genre/', views.books_by_genre),
+    path('books/top-sellers/', views.top_sellers),
+    path('books/rating/', views.books_by_rating),
+    path('books/discount/', views.discount_books_by_publisher),
+    
+    # -------------------
     # Profile Management
     # -------------------
     path('users/', views.create_user),
@@ -22,18 +30,16 @@ urlpatterns = [
     # -------------------
     path('wishlists/create/', views.create_wishlist),
     path('wishlists/add-book/', views.add_book_to_wishlist),
-
-    # -------------------
-    # Book Browsing & Sorting
-    # -------------------
-    path('books/genre/', views.books_by_genre),
-    path('books/top-sellers/', views.top_sellers),
+    path('wishlists/move-to-cart/', views.move_book_from_wishlist_to_cart),
+    path('wishlists/<int:wishlist_id>/', views.list_books_in_wishlist),
 
     # -------------------
     # Book Details
     # -------------------
-    path('books/create/', views.create_book),
+    path('books/', views.create_book),
     path('books/<str:isbn>/', views.retrieve_book_by_isbn),
+    path('authors/', views.create_author),
+    path('authors/<int:author_id>/', views.retrieve_author_by_id),
 
     # -------------------
     # Book Rating & Commenting
