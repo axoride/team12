@@ -165,10 +165,11 @@ def retrieve_author_by_id(request, author_id):
     except Author.DoesNotExist:
         return Response(status=status.HTTP_404_NOT_FOUND)
 
-
 # -----------------------------
 # Wishlist Management (Last Updated: 3-23-2026)
 # -----------------------------
+
+# Functionality for creating a wishlist given User ID and Name
 @api_view(['POST'])
 def create_wishlist(request):
     serializer = WishlistCreateSerializer(data=request.data)
@@ -187,6 +188,7 @@ def create_wishlist(request):
     Wishlist.objects.create(user=user, name=name)
     return Response(status=status.HTTP_201_CREATED)
 
+# Functionality for adding a book to a wishlist given a Book ID and Wishlist ID
 @api_view(['POST'])
 def add_book_to_wishlist(request):
     serializer = AddBookToWishlistSerializer(data=request.data)
@@ -212,6 +214,7 @@ def add_book_to_wishlist(request):
     WishlistBook.objects.create(book=book, wishlist=wishlist)
     return Response({"message": "Book added to wishlist successfully."}, status=status.HTTP_200_OK)
 
+# Functionality for removing book from wishlist and adding it to cart given a Wishlist ID and Book ID
 @api_view(['DELETE'])
 def move_book_from_wishlist_to_cart(request):
     book_id = request.data.get('book_id')
@@ -271,6 +274,35 @@ def move_book_from_wishlist_to_cart(request):
         {"message": "Book removed from wishlist and added to cart successfully."},
         status=status.HTTP_200_OK
     )
+
+# Functionality for listing all books in a wishlist given a Wishlist ID
+@api_view(['GET'])
+def list_books_in_wishlist(request, wishlist_id):
+    try:
+        wishlist = Wishlist.objects.get(id=wishlist_id)
+    except Wishlist.DoesNotExist:
+        return Response(
+            {"error": "Wishlist not found."},
+            status=status.HTTP_404_NOT_FOUND
+        )
+
+    wishlist_books = WishlistBook.objects.filter(wishlist=wishlist)
+
+    books = []
+    for wishlist_book in wishlist_books:
+        book = wishlist_book.book
+        books.append({
+    	    "book_id": book.id,
+    	    "isbn": book.isbn,
+    	    "name": book.name,
+    	    "author": book.author,
+    	    "price": str(book.price),
+    	    "genre": book.genre,
+    	    "publisher": book.publisher,
+    	    "year_published": book.year_published
+	})
+
+    return Response(books, status=status.HTTP_200_OK)
 
 # -----------------------------
 # Book Browsing & Sorting

@@ -31,6 +31,7 @@ urlpatterns = [
     path('wishlists/create/', views.create_wishlist),
     path('wishlists/add-book/', views.add_book_to_wishlist),
     path('wishlists/move-to-cart/', views.move_book_from_wishlist_to_cart),
+    path('wishlists/<int:wishlist_id>/', views.list_books_in_wishlist),
 
     # -------------------
     # Book Details
