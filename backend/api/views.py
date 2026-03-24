@@ -10,7 +10,8 @@ from .models import (
     BookDetail,
     Author,
     Wishlist,
-    WishlistBook
+    WishlistBook, 
+    CreditCard
 )
 from .serializers import (
     UserProfileSerializer,
@@ -19,7 +20,11 @@ from .serializers import (
     WishlistCreateSerializer,
     AddBookToWishlistSerializer,
     WishlistBookSerializer,
-    BookBrowseSerializer, AuthorSerializer
+    BookBrowseSerializer,
+    BookBrowseSerializer,
+    UpdateUserSerializer,
+    CreditCardSerializer,
+    AuthorSerializer,
 )
 
 # -----------------------------
@@ -43,6 +48,43 @@ def get_user(request, username):
 
     serializer = UserProfileSerializer(user)
     return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+@api_view(['PATCH'])
+def update_user(request, username):
+    try:
+        user = UserProfile.objects.get(username=username)
+    except UserProfile.DoesNotExist:
+        return Response({"error": "User not found."}, status=status.HTTP_404_NOT_FOUND)
+
+    # Check if email is in the request body and reject it
+    if 'email' in request.data:
+        return Response({"error": "Email cannot be updated."}, status=status.HTTP_400_BAD_REQUEST)
+
+    # Check if new username already exists
+    new_username = request.data.get('username')
+    if new_username and new_username != username:
+        if UserProfile.objects.filter(username=new_username).exists():
+            return Response({"error": "Username already taken."}, status=status.HTTP_400_BAD_REQUEST)
+
+    serializer = UpdateUserSerializer(user, data=request.data, partial=True)
+    if serializer.is_valid():
+        serializer.save()
+        return Response({"message": "User updated successfully."}, status=status.HTTP_200_OK)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['POST'])
+def create_credit_card(request):
+    """
+    Create a credit card linked to an existing user.
+    Requires: username, card_number, expiration_date, cvv
+    """
+    serializer = CreditCardSerializer(data=request.data)
+    if serializer.is_valid():
+        serializer.save()
+        return Response({"message": "Credit card added successfully."}, status=status.HTTP_201_CREATED)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 
 # -----------------------------

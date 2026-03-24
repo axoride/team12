@@ -7,6 +7,9 @@ __pycache__/
 *.so
 
 # Distribution / packaging
+backend/venv311/
+venv311/
+.postman/
 .Python
 build/
 develop-eggs/
@@ -60,6 +63,7 @@ cover/
 local_settings.py
 db.sqlite3
 db.sqlite3-journal
+api/migrations/0*.py
 
 # Flask stuff:
 instance/
