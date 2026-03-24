@@ -1,4 +1,5 @@
 from decimal import Decimal
+from django.db.models import Avg
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
@@ -11,8 +12,11 @@ from .models import (
     Author,
     Wishlist,
     WishlistBook, 
-    CreditCard
+    CreditCard,
+    BookRating,
+    BookComment
 )
+
 from .serializers import (
     UserProfileSerializer,
     CartItemSerializer,
@@ -21,10 +25,11 @@ from .serializers import (
     AddBookToWishlistSerializer,
     WishlistBookSerializer,
     BookBrowseSerializer,
-    BookBrowseSerializer,
     UpdateUserSerializer,
     CreditCardSerializer,
     AuthorSerializer,
+    BookCommentSerializer,
+    BookReviewSummarySerializer
 )
 
 # -----------------------------
@@ -48,7 +53,6 @@ def get_user(request, username):
 
     serializer = UserProfileSerializer(user)
     return Response(serializer.data, status=status.HTTP_200_OK)
-
 
 @api_view(['PATCH'])
 def update_user(request, username):
@@ -85,8 +89,7 @@ def create_credit_card(request):
         return Response({"message": "Credit card added successfully."}, status=status.HTTP_201_CREATED)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-
-
+  
 # -----------------------------
 # Shopping Cart
 # -----------------------------
@@ -161,6 +164,8 @@ def retrieve_author_by_id(request, author_id):
         return Response(serializer.data)
     except Author.DoesNotExist:
         return Response(status=status.HTTP_404_NOT_FOUND)
+
+
 # -----------------------------
 # Wishlist Management (Last Updated: 3-23-2026)
 # -----------------------------
@@ -270,6 +275,8 @@ def move_book_from_wishlist_to_cart(request):
 # -----------------------------
 # Book Browsing & Sorting
 # -----------------------------
+
+# Retrieve List of Books by Genre
 @api_view(['GET'])
 def books_by_genre(request):
     genre = request.GET.get('genre')
@@ -281,21 +288,81 @@ def books_by_genre(request):
     serializer = BookBrowseSerializer(books, many=True)
     return Response(serializer.data, status=status.HTTP_200_OK)
 
-
+# Top 10 by copies_sold
 @api_view(['GET'])
 def top_sellers(request):
-    # Top 10 by copies_sold
     books = BookDetail.objects.order_by('-copies_sold')[:10]
     serializer = BookBrowseSerializer(books, many=True)
-    return Response(serializer.data, status=status.HTTP_200_OK)
+    return Response(serializer.data)
+
+
+@api_view(['GET'])
+def books_by_rating(request):
+    rating = request.GET.get('rating')
+
+    if rating is None:
+        return Response(
+            {"error": "Rating parameter is required."},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    try:
+        rating = float(rating)
+    except ValueError:
+        return Response(
+            {"error": "Rating must be a number."},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    books = BookDetail.objects.annotate(
+        avg_rating=Avg('ratings__rating')
+    ).filter(avg_rating__gte=rating)
+
+    serializer = BookBrowseSerializer(books, many=True)
+    return Response(serializer.data)
+
+
+@api_view(['PATCH'])
+def discount_books_by_publisher(request):
+    publisher = request.data.get('publisher')
+    discount_percent = request.data.get('discount_percent')
+
+    if not publisher or discount_percent is None:
+        return Response(
+            {"error": "Publisher and discount_percent are required."},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    try:
+        discount_percent = Decimal(discount_percent)
+    except:
+        return Response(
+            {"error": "Discount must be a number."},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    books = BookDetail.objects.filter(publisher=publisher)
+
+    if not books.exists():
+        return Response(
+            {"error": "No books found for that publisher."},
+            status=status.HTTP_404_NOT_FOUND
+        )
+
+    discount = discount_percent / Decimal(100)
+
+    for book in books:
+        book.price = book.price * (Decimal(1) - discount)
+        book.save()
+
+    return Response(
+        {"message": "Discount applied successfully."},
+        status=status.HTTP_200_OK
+    )
 
 # -----------------------------
 # Book Rating & Commenting
 # -----------------------------
-from django.db.models import Avg
-from .models import BookRating, BookComment
-from .serializers import BookRatingSerializer, BookCommentSerializer, BookReviewSummarySerializer
-
 
 @api_view(['GET'])
 def get_book_reviews(request, isbn):
@@ -348,3 +415,4 @@ def submit_comment(request, isbn):
         serializer.save()
         return Response(serializer.data, status=status.HTTP_201_CREATED)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
