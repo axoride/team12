@@ -8,8 +8,7 @@ class Migration(migrations.Migration):
 
     initial = True
 
-    dependencies = [
-    ]
+    dependencies = []
 
     operations = [
         migrations.CreateModel(
@@ -75,4 +74,4 @@ class Migration(migrations.Migration):
             model_name='wishlistbook',
             constraint=models.UniqueConstraint(fields=('wishlist', 'book'), name='unique_book_per_wishlist'),
         ),
-    ]
+
