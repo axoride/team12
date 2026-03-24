@@ -1,10 +1,11 @@
 from django.contrib import admin
-from django.urls import path
+from django.urls import path, include
 from api import views
 
 urlpatterns = [
     # Admin
     path('admin/', admin.site.urls),
+    path('api/', include('api.urls')),
 
     # -------------------
     # Profile Management
@@ -46,3 +47,5 @@ urlpatterns = [
     path('api/books/<str:isbn>/ratings/', views.submit_rating),
     path('api/books/<str:isbn>/comments/', views.submit_comment),
 ]
+
+

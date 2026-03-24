@@ -13,7 +13,9 @@ urlpatterns = [
     # -------------------
     # Profile Management
     # -------------------
-    path('users/create/', views.create_user),
+    path('users/', views.create_user),
+    path('users/credit-card/', views.create_credit_card),
+    path('users/<str:username>/update/', views.update_user),
     path('users/<str:username>/', views.get_user),
 
     # -------------------
@@ -24,16 +26,18 @@ urlpatterns = [
     path('cart/subtotal/', views.get_cart_subtotal),
 
     # -------------------
-    # Book Details
-    # -------------------
-    path('books/create/', views.create_book),
-    path('books/<str:isbn>/', views.retrieve_book_by_isbn),
-
-    # -------------------
     # Wishlist Management
     # -------------------
     path('wishlists/create/', views.create_wishlist),
     path('wishlists/add-book/', views.add_book_to_wishlist),
+
+    # -------------------
+    # Book Details
+    # -------------------
+    path('books/', views.create_book),
+    path('books/<str:isbn>/', views.retrieve_book_by_isbn),
+    path('authors/', views.create_author),
+    path('authors/<int:author_id>/', views.retrieve_author_by_id),
 
     # -------------------
     # Book Rating & Commenting
@@ -41,4 +45,7 @@ urlpatterns = [
     path('books/<str:isbn>/reviews/', views.get_book_reviews),
     path('books/<str:isbn>/ratings/', views.submit_rating),
     path('books/<str:isbn>/comments/', views.submit_comment),
+
 ]
+
+

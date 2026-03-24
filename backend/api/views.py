@@ -1,4 +1,5 @@
 from decimal import Decimal
+from django.db.models import Avg
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
@@ -8,9 +9,14 @@ from .models import (
     UserProfile,
     CartItem,
     BookDetail,
+    Author,
     Wishlist,
-    WishlistBook
+    WishlistBook, 
+    CreditCard,
+    BookRating,
+    BookComment
 )
+
 from .serializers import (
     UserProfileSerializer,
     CartItemSerializer,
@@ -18,7 +24,12 @@ from .serializers import (
     WishlistCreateSerializer,
     AddBookToWishlistSerializer,
     WishlistBookSerializer,
-    BookBrowseSerializer
+    BookBrowseSerializer,
+    UpdateUserSerializer,
+    CreditCardSerializer,
+    AuthorSerializer,
+    BookCommentSerializer,
+    BookReviewSummarySerializer
 )
 
 # -----------------------------
@@ -43,7 +54,42 @@ def get_user(request, username):
     serializer = UserProfileSerializer(user)
     return Response(serializer.data, status=status.HTTP_200_OK)
 
+@api_view(['PATCH'])
+def update_user(request, username):
+    try:
+        user = UserProfile.objects.get(username=username)
+    except UserProfile.DoesNotExist:
+        return Response({"error": "User not found."}, status=status.HTTP_404_NOT_FOUND)
 
+    # Check if email is in the request body and reject it
+    if 'email' in request.data:
+        return Response({"error": "Email cannot be updated."}, status=status.HTTP_400_BAD_REQUEST)
+
+    # Check if new username already exists
+    new_username = request.data.get('username')
+    if new_username and new_username != username:
+        if UserProfile.objects.filter(username=new_username).exists():
+            return Response({"error": "Username already taken."}, status=status.HTTP_400_BAD_REQUEST)
+
+    serializer = UpdateUserSerializer(user, data=request.data, partial=True)
+    if serializer.is_valid():
+        serializer.save()
+        return Response({"message": "User updated successfully."}, status=status.HTTP_200_OK)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['POST'])
+def create_credit_card(request):
+    """
+    Create a credit card linked to an existing user.
+    Requires: username, card_number, expiration_date, cvv
+    """
+    serializer = CreditCardSerializer(data=request.data)
+    if serializer.is_valid():
+        serializer.save()
+        return Response({"message": "Credit card added successfully."}, status=status.HTTP_201_CREATED)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+  
 # -----------------------------
 # Shopping Cart
 # -----------------------------
@@ -102,6 +148,23 @@ def retrieve_book_by_isbn(request, isbn):
     except BookDetail.DoesNotExist:
         return Response({'error': 'Book not found'}, status=status.HTTP_404_NOT_FOUND)
 
+@api_view(['POST'])
+def create_author(request):
+    serializer = AuthorSerializer(data=request.data)
+    if serializer.is_valid():
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['GET'])
+def retrieve_author_by_id(request, author_id):
+    try:
+        author = Author.objects.get(id=author_id)
+        serializer = AuthorSerializer(author)
+        return Response(serializer.data)
+    except Author.DoesNotExist:
+        return Response(status=status.HTTP_404_NOT_FOUND)
+
 
 # -----------------------------
 # Wishlist Management
@@ -154,25 +217,20 @@ def add_book_to_wishlist(request):
 # -----------------------------
 # Book Browsing & Sorting
 # -----------------------------
+
 # Retrieve List of Books by Genre
-
-from django.db.models import Avg
-
 @api_view(['GET'])
 def books_by_genre(request):
     genre = request.GET.get('genre')
-
     if not genre:
-        return Response(
-            {"error": "Genre parameter is required."},
-            status=status.HTTP_400_BAD_REQUEST
-        )
+        return Response({"error": "Genre parameter is required."}, status=status.HTTP_400_BAD_REQUEST)
 
+    # Case-insensitive search for genre
     books = BookDetail.objects.filter(genre__iexact=genre)
     serializer = BookBrowseSerializer(books, many=True)
-    return Response(serializer.data)
+    return Response(serializer.data, status=status.HTTP_200_OK)
 
-
+# Top 10 by copies_sold
 @api_view(['GET'])
 def top_sellers(request):
     books = BookDetail.objects.order_by('-copies_sold')[:10]
@@ -243,13 +301,10 @@ def discount_books_by_publisher(request):
         {"message": "Discount applied successfully."},
         status=status.HTTP_200_OK
     )
+
 # -----------------------------
 # Book Rating & Commenting
 # -----------------------------
-from django.db.models import Avg
-from .models import BookRating, BookComment
-from .serializers import BookRatingSerializer, BookCommentSerializer, BookReviewSummarySerializer
-
 
 @api_view(['GET'])
 def get_book_reviews(request, isbn):
