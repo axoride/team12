@@ -41,4 +41,6 @@ urlpatterns = [
     path('books/<str:isbn>/reviews/', views.get_book_reviews),
     path('books/<str:isbn>/ratings/', views.submit_rating),
     path('books/<str:isbn>/comments/', views.submit_comment),
+    path('books/<str:isbn>/comments-list/', views.get_book_comments, name='get_book_comments'),
+    path('books/<str:isbn>/average-rating/', views.get_average_rating, name='get_average_rating'),
 ]

@@ -267,3 +267,44 @@ def submit_comment(request, isbn):
         serializer.save()
         return Response(serializer.data, status=status.HTTP_201_CREATED)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+# Story 8 — GET all comments for a book
+@api_view(['GET'])
+def get_book_comments(request, isbn):
+    try:
+        book = BookDetail.objects.get(isbn=isbn)
+    except BookDetail.DoesNotExist:
+        return Response({"error": "Book not found."}, status=status.HTTP_404_NOT_FOUND)
+
+    comments = BookComment.objects.filter(book=book).values(
+        'id',
+        'user__username',
+        'comment',
+        'created_at'
+    )
+
+    return Response({
+        "book_isbn": isbn,
+        "book_name": book.name,
+        "comments": list(comments)
+    }, status=status.HTTP_200_OK)
+
+
+# Story 9 — GET average rating for a book
+@api_view(['GET'])
+def get_average_rating(request, isbn):
+    try:
+        book = BookDetail.objects.get(isbn=isbn)
+    except BookDetail.DoesNotExist:
+        return Response({"error": "Book not found."}, status=status.HTTP_404_NOT_FOUND)
+
+    result = BookRating.objects.filter(book=book).aggregate(avg=Avg('rating'))
+    avg = result['avg']
+
+    return Response({
+        "book_isbn": isbn,
+        "book_name": book.name,
+        "average_rating": round(float(avg), 2) if avg is not None else None,
+        "message": "No ratings yet." if avg is None else "Average rating calculated successfully."
+    }, status=status.HTTP_200_OK)
