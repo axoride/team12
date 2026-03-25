@@ -1,5 +1,6 @@
 from rest_framework import serializers
-from .models import UserProfile, CartItem, BookDetail, Wishlist, WishlistBook, CreditCard
+from .models import UserProfile, CartItem, BookDetail, Wishlist, WishlistBook, BookRating, BookComment, CreditCard, Author
+
 
 # -------------------
 # Profile Management
@@ -16,7 +17,7 @@ class UpdateUserSerializer(serializers.ModelSerializer):
     """
     class Meta:
         model = UserProfile
-        fields = ['password', 'name', 'address', 'city', 'state', 'zip']
+        fields = ['username', 'password', 'name', 'address', 'city', 'state', 'zip']
         # email is intentionally excluded here
 
 class CreditCardSerializer(serializers.ModelSerializer):
@@ -52,7 +53,6 @@ class CreditCardSerializer(serializers.ModelSerializer):
         except UserProfile.DoesNotExist:
             raise serializers.ValidationError({"username": "User not found."})
         return CreditCard.objects.create(user=user, **validated_data)
-
 
 # -------------------
 # Wishlist Management
@@ -100,6 +100,12 @@ class BookDetailSerializer(serializers.ModelSerializer):
         model = BookDetail  # model getting serialized
         fields = ['isbn', 'name', 'description', 'price', 'author', 'genre', 'publisher', 'year_published', 'copies_sold']
 
+
+class AuthorSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Author
+        fields = '__all__'
+
 # -------------------
 # Book Browsing & Sorting
 # -------------------
@@ -112,8 +118,6 @@ class BookBrowseSerializer(serializers.ModelSerializer):
 # -------------------
 # Book Rating & Commenting
 # -------------------
-from .models import BookRating, BookComment
-
 
 class BookRatingSerializer(serializers.ModelSerializer):
     book_isbn = serializers.CharField(write_only=True)

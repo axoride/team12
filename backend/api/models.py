@@ -16,7 +16,7 @@ class UserProfile(models.Model):
 
     def __str__(self):
         return self.username
-
+      
 class CreditCard(models.Model):
     user = models.ForeignKey(UserProfile, on_delete=models.CASCADE, related_name='credit_cards')
     card_number = models.CharField(max_length=16)
@@ -28,7 +28,7 @@ class CreditCard(models.Model):
 
 
 # ====================
-# Shopping Cart (LL Feature)
+# Shopping Cart
 # ====================
 
 class CartItem(models.Model):
@@ -59,9 +59,18 @@ class BookDetail(models.Model):
     def __str__(self):
         return self.name
 
+class Author(models.Model):
+    id = models.AutoField(primary_key=True)
+    first_name = models.CharField(max_length=255)
+    last_name = models.CharField(max_length=255)
+    biography = models.TextField()
+    publisher = models.CharField(max_length=255)
 
+    def __str__(self):
+        return f"{self.first_name} {self.last_name}"
+      
 # ====================
-# Wishlist Management (Updated: 3-10-2026) potato
+# Wishlist Management (Updated: 3-10-2026) 
 # ====================
 
 class Wishlist(models.Model):
