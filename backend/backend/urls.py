@@ -1,10 +1,11 @@
 from django.contrib import admin
-from django.urls import path
+from django.urls import path, include
 from api import views
 
 urlpatterns = [
     # Admin
     path('admin/', admin.site.urls),
+    path('api/', include('api.urls')),
 
     # -------------------
     # Profile Management
@@ -31,6 +32,8 @@ urlpatterns = [
     # -------------------
     path('api/books/genre/', views.books_by_genre, name='books_by_genre'),
     path('api/books/top-sellers/', views.top_sellers, name='top_sellers'),
+    path('api/books/rating/', views.books_by_rating, name='books_by_rating'),
+    path('api/books/discount/', views.discount_books_by_publisher, name='discount_books_by_publisher'),
 
     # -------------------
     # Book Details
@@ -45,3 +48,5 @@ urlpatterns = [
     path('api/books/<str:isbn>/ratings/', views.submit_rating),
     path('api/books/<str:isbn>/comments/', views.submit_comment),
 ]
+
+

@@ -1,5 +1,6 @@
 from rest_framework import serializers
-from .models import UserProfile, CartItem, BookDetail, Wishlist, WishlistBook
+from .models import UserProfile, CartItem, BookDetail, Wishlist, WishlistBook, BookRating, BookComment, CreditCard, Author
+
 
 # -------------------
 # Profile Management
@@ -8,6 +9,50 @@ class UserProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserProfile
         fields = '__all__'
+
+class UpdateUserSerializer(serializers.ModelSerializer):
+    """
+    Used for PATCH update — excludes email so it cannot be changed.
+    All fields are optional since it's a partial update.
+    """
+    class Meta:
+        model = UserProfile
+        fields = ['username', 'password', 'name', 'address', 'city', 'state', 'zip']
+        # email is intentionally excluded here
+
+class CreditCardSerializer(serializers.ModelSerializer):
+    username = serializers.CharField(write_only=True)  # used to look up user, not stored directly
+
+    class Meta:
+        model = CreditCard
+        fields = ['id', 'username', 'card_number', 'expiration_date', 'cvv']
+
+    def validate_card_number(self, value):
+        # Make sure card number is exactly 16 digits
+        if not value.isdigit() or len(value) != 16:
+            raise serializers.ValidationError("Card number must be exactly 16 digits.")
+        return value
+
+    def validate_cvv(self, value):
+        # CVV should be 3 or 4 digits
+        if not value.isdigit() or len(value) not in [3, 4]:
+            raise serializers.ValidationError("CVV must be 3 or 4 digits.")
+        return value
+
+    def validate_expiration_date(self, value):
+        # Basic format check MM/YY
+        if len(value) != 5 or value[2] != '/':
+            raise serializers.ValidationError("Expiration date must be in MM/YY format.")
+        return value
+
+    def create(self, validated_data):
+        # Pop username, look up the user, then create the card
+        username = validated_data.pop('username')
+        try:
+            user = UserProfile.objects.get(username=username)
+        except UserProfile.DoesNotExist:
+            raise serializers.ValidationError({"username": "User not found."})
+        return CreditCard.objects.create(user=user, **validated_data)
 
 # -------------------
 # Wishlist Management
@@ -55,6 +100,12 @@ class BookDetailSerializer(serializers.ModelSerializer):
         model = BookDetail  # model getting serialized
         fields = ['isbn', 'name', 'description', 'price', 'author', 'genre', 'publisher', 'year_published', 'copies_sold']
 
+
+class AuthorSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Author
+        fields = '__all__'
+
 # -------------------
 # Book Browsing & Sorting
 # -------------------
@@ -67,8 +118,6 @@ class BookBrowseSerializer(serializers.ModelSerializer):
 # -------------------
 # Book Rating & Commenting
 # -------------------
-from .models import BookRating, BookComment
-
 
 class BookRatingSerializer(serializers.ModelSerializer):
     book_isbn = serializers.CharField(write_only=True)

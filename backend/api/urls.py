@@ -7,11 +7,15 @@ urlpatterns = [
     # -------------------
     path('books/genre/', views.books_by_genre),
     path('books/top-sellers/', views.top_sellers),
-
+    path('books/rating/', views.books_by_rating),
+    path('books/discount/', views.discount_books_by_publisher),
+    
     # -------------------
     # Profile Management
     # -------------------
-    path('users/create/', views.create_user),
+    path('users/', views.create_user),
+    path('users/credit-card/', views.create_credit_card),
+    path('users/<str:username>/update/', views.update_user),
     path('users/<str:username>/', views.get_user),
 
     # -------------------
@@ -23,16 +27,20 @@ urlpatterns = [
     path('cart/remove/', views.remove_from_cart),
 
     # -------------------
-    # Book Details
-    # -------------------
-    path('books/create/', views.create_book),
-    path('books/<str:isbn>/', views.retrieve_book_by_isbn),
-
-    # -------------------
     # Wishlist Management
     # -------------------
     path('wishlists/create/', views.create_wishlist),
     path('wishlists/add-book/', views.add_book_to_wishlist),
+    path('wishlists/move-to-cart/', views.move_book_from_wishlist_to_cart),
+    path('wishlists/<int:wishlist_id>/', views.list_books_in_wishlist),
+
+    # -------------------
+    # Book Details
+    # -------------------
+    path('books/', views.create_book),
+    path('books/<str:isbn>/', views.retrieve_book_by_isbn),
+    path('authors/', views.create_author),
+    path('authors/<int:author_id>/', views.retrieve_author_by_id),
 
     # -------------------
     # Book Rating & Commenting
