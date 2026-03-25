@@ -24,6 +24,7 @@ urlpatterns = [
     path('cart/', views.get_cart_items),
     path('cart/add/', views.add_to_cart),
     path('cart/subtotal/', views.get_cart_subtotal),
+    path('cart/remove/', views.remove_from_cart),
 
     # -------------------
     # Wishlist Management
