@@ -111,6 +111,8 @@ class AuthorSerializer(serializers.ModelSerializer):
 # -------------------
 
 class BookBrowseSerializer(serializers.ModelSerializer):
+    rating = serializers.FloatField(source='avg_rating', read_only=True)
+
     class Meta:
         model = BookDetail
         fields = '__all__'
