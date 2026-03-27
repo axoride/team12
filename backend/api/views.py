@@ -97,9 +97,28 @@ def create_credit_card(request):
 # -----------------------------
 @api_view(['GET'])
 def get_cart_items(request):
-    items = CartItem.objects.all()
+    user_id = request.GET.get('user_id')
+    if not user_id:
+        return Response({'error': 'user_id is required'}, status=status.HTTP_400_BAD_REQUEST)
+
+    items = CartItem.objects.filter(user_id=user_id)
     serializer = CartItemSerializer(items, many=True)
-    return Response(serializer.data)
+    return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+@api_view(['DELETE'])
+def remove_from_cart(request):
+    user_id = request.data.get('user_id')
+    book_id = request.data.get('book_id')
+
+    if not user_id or not book_id:
+        return Response({'error': 'user_id and book_id are required'}, status=status.HTTP_400_BAD_REQUEST)
+
+    deleted, _ = CartItem.objects.filter(user_id=user_id, book_id=book_id).delete()
+    if deleted == 0:
+        return Response({'error': 'Item not found in cart'}, status=status.HTTP_404_NOT_FOUND)
+
+    return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 @api_view(['POST'])
@@ -167,10 +186,11 @@ def retrieve_author_by_id(request, author_id):
     except Author.DoesNotExist:
         return Response(status=status.HTTP_404_NOT_FOUND)
 
+# -----------------------------
+# Wishlist Management (Last Updated: 3-23-2026)
+# -----------------------------
 
-# -----------------------------
-# Wishlist Management
-# -----------------------------
+# Functionality for creating a wishlist given User ID and Name
 @api_view(['POST'])
 def create_wishlist(request):
     serializer = WishlistCreateSerializer(data=request.data)
@@ -189,7 +209,7 @@ def create_wishlist(request):
     Wishlist.objects.create(user=user, name=name)
     return Response(status=status.HTTP_201_CREATED)
 
-
+# Functionality for adding a book to a wishlist given a Book ID and Wishlist ID
 @api_view(['POST'])
 def add_book_to_wishlist(request):
     serializer = AddBookToWishlistSerializer(data=request.data)
@@ -215,6 +235,95 @@ def add_book_to_wishlist(request):
     WishlistBook.objects.create(book=book, wishlist=wishlist)
     return Response({"message": "Book added to wishlist successfully."}, status=status.HTTP_200_OK)
 
+# Functionality for removing book from wishlist and adding it to cart given a Wishlist ID and Book ID
+@api_view(['DELETE'])
+def move_book_from_wishlist_to_cart(request):
+    book_id = request.data.get('book_id')
+    wishlist_id = request.data.get('wishlist_id')
+
+    if not book_id or not wishlist_id:
+        return Response(
+            {"error": "book_id and wishlist_id are required."},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    try:
+        wishlist = Wishlist.objects.get(id=wishlist_id)
+    except Wishlist.DoesNotExist:
+        return Response(
+            {"error": "Wishlist not found."},
+            status=status.HTTP_404_NOT_FOUND
+        )
+
+    try:
+        book = BookDetail.objects.get(id=book_id)
+    except BookDetail.DoesNotExist:
+        return Response(
+            {"error": "Book not found."},
+            status=status.HTTP_404_NOT_FOUND
+        )
+
+    try:
+        wishlist_book = WishlistBook.objects.get(wishlist=wishlist, book=book)
+    except WishlistBook.DoesNotExist:
+        return Response(
+            {"error": "This book is not in the specified wishlist."},
+            status=status.HTTP_404_NOT_FOUND
+        )
+
+    # Remove from wishlist
+    wishlist_book.delete()
+
+    # Add to cart using the wishlist owner's user id
+    existing_cart_item = CartItem.objects.filter(
+        user_id=wishlist.user.id,
+        book_id=book.id
+    ).first()
+
+    if existing_cart_item:
+        existing_cart_item.quantity += 1
+        existing_cart_item.save()
+    else:
+        CartItem.objects.create(
+            user_id=wishlist.user.id,
+            book_id=book.id,
+            price=book.price,
+            quantity=1
+        )
+
+    return Response(
+        {"message": "Book removed from wishlist and added to cart successfully."},
+        status=status.HTTP_200_OK
+    )
+
+# Functionality for listing all books in a wishlist given a Wishlist ID
+@api_view(['GET'])
+def list_books_in_wishlist(request, wishlist_id):
+    try:
+        wishlist = Wishlist.objects.get(id=wishlist_id)
+    except Wishlist.DoesNotExist:
+        return Response(
+            {"error": "Wishlist not found."},
+            status=status.HTTP_404_NOT_FOUND
+        )
+
+    wishlist_books = WishlistBook.objects.filter(wishlist=wishlist)
+
+    books = []
+    for wishlist_book in wishlist_books:
+        book = wishlist_book.book
+        books.append({
+    	    "book_id": book.id,
+    	    "isbn": book.isbn,
+    	    "name": book.name,
+    	    "author": book.author,
+    	    "price": str(book.price),
+    	    "genre": book.genre,
+    	    "publisher": book.publisher,
+    	    "year_published": book.year_published
+	})
+
+    return Response(books, status=status.HTTP_200_OK)
 
 # -----------------------------
 # Book Browsing & Sorting
@@ -359,4 +468,46 @@ def submit_comment(request, isbn):
         serializer.save()
         return Response(serializer.data, status=status.HTTP_201_CREATED)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+
+# Story 8 — GET all comments for a book
+@api_view(['GET'])
+def get_book_comments(request, isbn):
+    try:
+        book = BookDetail.objects.get(isbn=isbn)
+    except BookDetail.DoesNotExist:
+        return Response({"error": "Book not found."}, status=status.HTTP_404_NOT_FOUND)
+
+    comments = BookComment.objects.filter(book=book).values(
+        'id',
+        'user__username',
+        'comment',
+        'created_at'
+    )
+
+    return Response({
+        "book_isbn": isbn,
+        "book_name": book.name,
+        "comments": list(comments)
+    }, status=status.HTTP_200_OK)
+
+
+# Story 9 — GET average rating for a book
+@api_view(['GET'])
+def get_average_rating(request, isbn):
+    try:
+        book = BookDetail.objects.get(isbn=isbn)
+    except BookDetail.DoesNotExist:
+        return Response({"error": "Book not found."}, status=status.HTTP_404_NOT_FOUND)
+
+    result = BookRating.objects.filter(book=book).aggregate(avg=Avg('rating'))
+    avg = result['avg']
+
+    return Response({
+        "book_isbn": isbn,
+        "book_name": book.name,
+        "average_rating": round(float(avg), 2) if avg is not None else None,
+        "message": "No ratings yet." if avg is None else "Average rating calculated successfully."
+    }, status=status.HTTP_200_OK)
 

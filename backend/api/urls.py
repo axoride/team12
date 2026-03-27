@@ -24,12 +24,15 @@ urlpatterns = [
     path('cart/', views.get_cart_items),
     path('cart/add/', views.add_to_cart),
     path('cart/subtotal/', views.get_cart_subtotal),
+    path('cart/remove/', views.remove_from_cart),
 
     # -------------------
     # Wishlist Management
     # -------------------
     path('wishlists/create/', views.create_wishlist),
     path('wishlists/add-book/', views.add_book_to_wishlist),
+    path('wishlists/move-to-cart/', views.move_book_from_wishlist_to_cart),
+    path('wishlists/<int:wishlist_id>/', views.list_books_in_wishlist),
 
     # -------------------
     # Book Details
@@ -46,6 +49,9 @@ urlpatterns = [
     path('books/<str:isbn>/ratings/', views.submit_rating),
     path('books/<str:isbn>/comments/', views.submit_comment),
 
+    path('books/<str:isbn>/comments-list/', views.get_book_comments, name='get_book_comments'),
+    path('books/<str:isbn>/average-rating/', views.get_average_rating, name='get_average_rating'),
 ]
+
 
 
