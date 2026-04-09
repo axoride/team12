@@ -330,16 +330,20 @@ def list_books_in_wishlist(request, wishlist_id):
 # -----------------------------
 
 # Retrieve List of Books by Genre
+from django.db.models import Avg
+
 @api_view(['GET'])
 def books_by_genre(request):
     genre = request.GET.get('genre')
     if not genre:
-        return Response({"error": "Genre parameter is required."}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({"error": "Genre parameter is required."}, status=400)
 
-    # Case-insensitive search for genre
-    books = BookDetail.objects.filter(genre__iexact=genre)
+    books = BookDetail.objects.filter(genre__iexact=genre).annotate(
+        avg_rating=Avg('ratings__rating')
+    )
+
     serializer = BookBrowseSerializer(books, many=True)
-    return Response(serializer.data, status=status.HTTP_200_OK)
+    return Response(serializer.data)
 
 # Top 10 by copies_sold
 @api_view(['GET'])
@@ -349,6 +353,7 @@ def top_sellers(request):
     return Response(serializer.data)
 
 
+# Sort by rating (average of ratings)
 @api_view(['GET'])
 def books_by_rating(request):
     rating = request.GET.get('rating')
@@ -374,7 +379,7 @@ def books_by_rating(request):
     serializer = BookBrowseSerializer(books, many=True)
     return Response(serializer.data)
 
-
+# Apply discount to all books by a specific publisher
 @api_view(['PATCH'])
 def discount_books_by_publisher(request):
     publisher = request.data.get('publisher')
